@@ -973,6 +973,7 @@ Single file with all functionality
 Production-ready for client delivery
 """
 
+import os
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -1313,10 +1314,14 @@ app = FastAPI(
     version="1.0"
 )
 
-# CORS
+# CORS — comma-separated origins via ALLOWED_ORIGINS env var, defaults to "*"
+ALLOWED_ORIGINS = [
+    o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -1459,6 +1464,7 @@ async def detect_and_measure(image: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
+    port = int(os.getenv("PORT", "8000"))
     logger.info("Starting Head Measurement API")
-    logger.info("Listening on http://0.0.0.0:8000")
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    logger.info(f"Listening on http://0.0.0.0:{port}")
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")

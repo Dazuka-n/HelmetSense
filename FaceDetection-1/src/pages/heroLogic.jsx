@@ -265,21 +265,32 @@ export const useHeroPageLogic = () => {
       const apiResponse = await detectFace(imageBlob);
       console.log("API Response:", apiResponse);
 
+      // Surface backend errors (HTTP 200 with success:false)
+      if (!apiResponse.success) {
+        throw new Error(
+          apiResponse.message || apiResponse.error || "Measurement failed"
+        );
+      }
+
       // Transform API response to match modal format
+      const measurements = apiResponse.measurements || {};
+      const sizeRec = apiResponse.size_recommendation || {};
+
       const transformedResults = {
         capturedImage: base64Image,
-        recommendedSize:
-          apiResponse.recommendedSize || apiResponse.size || "N/A",
+        recommendedSize: sizeRec.recommended_size || "N/A",
         headCircumference:
-          apiResponse.headCircumference ||
-          apiResponse.head_circumference ||
-          "N/A",
-        faceWidth: apiResponse.faceWidth || apiResponse.face_width || "N/A",
+          measurements.circumference_cm != null
+            ? `${measurements.circumference_cm} cm`
+            : "N/A",
+        faceWidth:
+          measurements.face_width_mm != null
+            ? `${measurements.face_width_mm} mm`
+            : "N/A",
         description:
-          apiResponse.description || "Measurement completed successfully.",
-        accuracy: apiResponse.accuracy || apiResponse.confidence || "N/A",
-        suggestedProducts:
-          apiResponse.suggestedProducts || apiResponse.products || [],
+          sizeRec.fit_description || "Measurement completed successfully.",
+        accuracy: sizeRec.accuracy || apiResponse.confidence || "N/A",
+        suggestedProducts: [],
       };
 
       setMeasurementResults(transformedResults);
